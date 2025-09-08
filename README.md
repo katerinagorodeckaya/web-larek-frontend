@@ -1,127 +1,165 @@
-# Проектная работа "Веб-ларек"
+# Web-ларёк - Интернет-магазин для веб-разработчиков
+SPA-приложение интернет-магазина с товарами для веб-разработчиков. Позволяет просматривать каталог, добавлять товары в корзину и оформлять заказы.
 
-Стек: HTML, SCSS, TS, Webpack
+Технологический стек:
+TypeScript - строгая типизация
+SCSS - стилизация компонентов
+Webpack - сборка проекта
+HTML5 - семантическая разметка
 
-Структура проекта:
-- src/ — исходные файлы проекта
-- src/components/ — папка с JS компонентами
-- src/components/base/ — папка с базовым кодом
+Структура проекта
+src/components/base/    # Базовые компоненты       
+│             
+│   ├── api.ts          # API-клиент
+│   ├── events.ts       # Система событий
+│   ├── App.ts          # Главный компонент приложения
+│   ├── ProductModel.ts # Модель товаров
+│   ├── OrderModel.ts   # Модель заказов
+│   └── Page.ts         # Компонент страницы
+│   ├── ProductCard.ts  # Карточка товара
+│   ├── Modal.ts        # Модальное окно
+│   ├── Basket.ts       # Корзина
+│   ├── OrderForm.ts    # Форма заказа
+│   ├── ContactsForm.ts # Форма контактов
+│   └── SuccessMessage.ts # Сообщение об успехе
+├── types/              # Типы TypeScript
+│   ├── appState.ts     # Состояние приложения
+│   ├── events.ts       # События
+│   ├── order.ts        # Типы заказов
+│   └── product.ts      # Типы товаров
+├── utils/              # Утилиты
+│   ├── constants.ts    # Константы
+│   └── utils.ts        # Вспомогательные функции
+├── scss/               # Стили
+│   └── styles.scss     # Основные стили
+└── index.ts           # Точка входа
 
-Важные файлы:
-- src/pages/index.html — HTML-файл главной страницы
-- src/types/index.ts — файл с типами
-- src/index.ts — точка входа приложения
-- src/scss/styles.scss — корневой файл стилей
-- src/utils/constants.ts — файл с константами
-- src/utils/utils.ts — файл с утилитами
 
+# Основные функции
+- Просмотр каталога товаров
 
-## Архитектура (MVP + Event Bus)
-### Модели (Model)
-- **`ProductModel`**:
-  - Загружает товары через API (`GET /product`)
-  - Трансформирует данные в `IProduct[]`
-  - Обновляет состояние `AppState.catalog`
+- Детальный просмотр товаров в модальном окне
 
-- **`OrderModel`**:
-  - Отправляет заказы (`POST /order`)
-  - Валидирует данные формы (`IOrderForm`)
-  - Возвращает результат типа `IOrder`
+- Добавление/удаление товаров из корзины
 
-- **`AppState`**:
-  - Хранит состояние:
-    - `catalog: IProduct[]`
-    - `basket: string[]`
-    - `order: IOrder | null`
+- Оформление заказа в два этапа:
 
-### Брокер событий
-- **`EventEmitter`**:
-  - Реализует паттерн Publisher/Subscriber
-  - Методы:
-    - `on(event, callback)`
-    - `emit(event, data)`
-    - `off(event, callback)`
+- Выбор способа оплаты и адреса доставки
 
-### События
+- Ввод контактных данных
+
+- Подтверждение успешного оформления заказа
+
+## Данные и типы данных
+Базовые типы API
 ```typescript
-export enum Events {
-  ITEM_ADDED = 'item:added',
-  ORDER_OPENED = 'order:opened',
-  ORDER_SUBMITTED = 'order:submitted',
-  MODAL_CLOSE = 'modal:close'
-}
-### Типы данных
-Товары
-typescript
+// Ответ API для списка товаров
+export type ApiListResponse<Type> = {
+    total: number,
+    items: Type[]
+};
+
+
+// Методы для POST запросов
+export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
+```
+Модель товара
+```typescript
 export interface IProduct {
-  id: string;
-  title: string;
-  price: number | null;
-  description?: string;
-  image?: string;
-  category?: string;
+    id: string;
+    title: string;
+    price: number | null;  // Цена или null если товар недоступен
+    description?: string;  // Описание товара
+    image?: string;        // URL изображения
+    category?: string;     // Категория: 'софт-скил', 'другое', 'хард-скил' и др.
 }
-Заказы
-typescript
+```
+Модель заказа
+```typescript
 export interface IOrderForm {
-  payment: 'online' | 'offline';
-  email: string;
-  phone: string;
-  address: string;
+    payment: 'online' | 'offline';  // Способ оплаты
+    email: string;                  // Email покупателя
+    phone: string;                  // Телефон покупателя
+    address: string;                // Адрес доставки
 }
 
 export interface IOrder extends IOrderForm {
-  items: string[];
-  total: number;
+    items: string[];  // Массив ID товаров в заказе
+    total: number;    // Общая сумма заказа
 }
-API
-Методы:
+```
+Состояние приложения
+```typescript
+export interface AppState {
+    catalog: IProduct[];  // Каталог всех товаров
+    basket: string[];     // ID товаров в корзине
+    order: IOrder | null; // Информация о текущем заказе
+}
+```
+События приложения
+```typescript
+export enum Events {
+    ITEM_ADDED = 'item:added',        // Товар добавлен в корзину
+    ORDER_OPENED = 'order:opened',    // Начато оформление заказа
+    ORDER_SUBMITTED = 'order:submitted', // Заказ отправлен на сервер
+    MODAL_CLOSE = 'modal:close'       // Модальное окно закрыто
+}
+```
+Компоненты интерфейса
 
-get<T>(uri): Promise<T>
-
-post<T>(uri, data): Promise<T>
-
-Примеры:
-
-GET /product → { items: IProduct[] }
-
-POST /order → IOrder
-
-Установка и запуск
-# Установка зависимостей
-npm install
-# или
-yarn
-
-# Запуск dev-сервера
-npm run start
-# или
-yarn start
-
-# Сборка проекта
-npm run build
-# или
-yarn build
-
-Взаимодействие компонентов
-Загрузка товаров:
-ProductModel → Api.get() → AppState.catalog
-
-Добавление в корзину:
-Пользователь → Events.ITEM_ADDED → App → AppState.basket
-
-Оформление заказа:
-Форма → OrderModel → Api.post() → IOrder
-
-Планы по развитию
-Реализация View:
-
-Catalog
-
-Basket
+ProductCard
+Компонент карточки товара, используется в каталоге и в превью.
+Особенности:
+- Отображение изображения, названия, цены и категории
+- Кнопка "В корзину"/"Убрать" в зависимости от состояния
+- Клик по карточке открывает детальное превью
 
 Modal
+Универсальное модальное окно с затемнением фоном.
+Функциональность:
+- Закрытие по клику на крестик или вне области контента
+- Блокировка прокрутки основного контента при открытии
+- Поддержка различных типов контента
 
-Валидация форм
+Basket
+Компонент корзины товаров.
+Отображает:
+- Список товаров в корзине
+- Общую сумму заказа
+- Кнопку перехода к оформлению
 
-Интеграция с REST API
+OrderForm & ContactsForm
+Формы для оформления заказа с валидацией полей.
+
+### Запуск и разработка
+Установка зависимостей
+```bash
+npm install
+```
+Запуск в режиме разработки
+```bash
+npm run start
+```
+Сборка проекта
+```bash
+npm run build
+```
+### Особенности реализации
+Событийная архитектура - компоненты общаются через систему событий
+
+Разделение ответственности - четкое разделение на модели, компоненты и утилиты
+
+TypeScript - полная типизация для надежности кода
+
+Адаптивный дизайн - поддержка различных устройств
+
+Валидация форм - проверка корректности вводимых данных
+
+### Скрипты package.json
+start - запуск dev-сервера с hot reload
+
+build - сборка проекта для production
+
+serve - запуск статического сервера для собранного проекта
+
+Проект демонстрирует современный подход к разработке SPA-приложений с использованием TypeScript и компонентной архитектуры.

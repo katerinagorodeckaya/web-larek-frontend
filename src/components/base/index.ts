@@ -1,12 +1,12 @@
 import './scss/styles.scss';
-import { Api } from './components/base/api';
-import { EventEmitter } from './components/base/events';
-import { App } from './components/base/App';
-import { ProductModel } from './components/base/ProductModel';
-import { OrderModel } from './components/base/OrderModel';
-import { Page } from './components/base/Page';
-import { AppState } from './types/appState';
-import { API_URL } from './utils/constants';
+import { Api } from './api';
+import { EventEmitter } from './events';
+import { App } from './App';
+import { ProductModel } from './ProductModel';
+import { OrderModel } from './OrderModel';
+import { Page } from './Page';
+import { AppState } from '../../types/appState';
+import { API_URL } from '../../utils/constants';
 
 // Инициализация состояния
 const initialState: AppState = {
@@ -27,14 +27,10 @@ const page = new Page(events, productModel, orderModel);
 
 // Глобальные обработчики ошибок
 events.on('order:error', (data: { error: any }) => {
-  console.error('Order error:', data.error);
+  console.error('Order error details:', data.error);
   alert('Произошла ошибка при оформлении заказа. Попробуйте еще раз.');
 });
 
 events.on('products:loaded', () => {
   console.log('Products loaded successfully');
-});
-
-events.on('order:success', () => {
-  console.log('Order completed successfully');
 });

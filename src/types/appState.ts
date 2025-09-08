@@ -3,6 +3,6 @@ import { IOrder } from './order';
 
 export interface AppState {
   catalog: IProduct[];
-  basket: string[]; // ID товаров
+  basket: string[]; 
   order: IOrder | null;
 }

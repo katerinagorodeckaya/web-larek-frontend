@@ -4,5 +4,5 @@ export interface IProduct {
   price: number | null;
   description?: string;
   image?: string;
-  category?: string; // 'софт-скил', 'другое', etc.
+  category?: string; 
 }

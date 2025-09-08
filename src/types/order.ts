@@ -6,6 +6,6 @@ export interface IOrderForm {
 }
 
 export interface IOrder extends IOrderForm {
-  items: string[]; // ID товаров
+  items: string[]; 
   total: number;
 }
