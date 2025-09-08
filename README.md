@@ -9,30 +9,30 @@ HTML5 - семантическая разметка
 
 Структура проекта
 src/components/base/    # Базовые компоненты       
-│             
-│   ├── api.ts          # API-клиент
-│   ├── events.ts       # Система событий
-│   ├── App.ts          # Главный компонент приложения
-│   ├── ProductModel.ts # Модель товаров
-│   ├── OrderModel.ts   # Модель заказов
-│   └── Page.ts         # Компонент страницы
-│   ├── ProductCard.ts  # Карточка товара
-│   ├── Modal.ts        # Модальное окно
-│   ├── Basket.ts       # Корзина
-│   ├── OrderForm.ts    # Форма заказа
-│   ├── ContactsForm.ts # Форма контактов
-│   └── SuccessMessage.ts # Сообщение об успехе
-├── types/              # Типы TypeScript
-│   ├── appState.ts     # Состояние приложения
-│   ├── events.ts       # События
-│   ├── order.ts        # Типы заказов
-│   └── product.ts      # Типы товаров
-├── utils/              # Утилиты
-│   ├── constants.ts    # Константы
-│   └── utils.ts        # Вспомогательные функции
-├── scss/               # Стили
-│   └── styles.scss     # Основные стили
-└── index.ts           # Точка входа
+           
+── api.ts          # API-клиент
+── events.ts       # Система событий
+── App.ts          # Главный компонент приложения
+── ProductModel.ts # Модель товаров
+── OrderModel.ts   # Модель заказов
+── Page.ts         # Компонент страницы
+── ProductCard.ts  # Карточка товара
+── Modal.ts        # Модальное окно
+── Basket.ts       # Корзина
+── OrderForm.ts    # Форма заказа
+── ContactsForm.ts # Форма контактов
+── SuccessMessage.ts # Сообщение об успехе
+types/              # Типы TypeScript
+── appState.ts     # Состояние приложения
+── events.ts       # События
+── order.ts        # Типы заказов
+── product.ts      # Типы товаров
+utils/              # Утилиты
+── constants.ts    # Константы
+── utils.ts        # Вспомогательные функции
+scss/               # Стили
+── styles.scss     # Основные стили
+index.ts           # Точка входа
 
 
 # Основные функции
