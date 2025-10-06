@@ -1,5 +1,14 @@
 # Web-ларёк - Интернет-магазин для веб-разработчиков
-SPA-приложение интернет-магазина с товарами для веб-разработчиков. Позволяет просматривать каталог, добавлять товары в корзину и оформлять заказы.
+Архитектура приложения
+Код приложения разделен на слои согласно парадигме MVP (Model-View-Presenter), которая обеспечивает четкое разделение ответственности между классами слоев Model и View. Каждый слой несет свой смысл и ответственность:
+
+Model - слой данных, отвечает за хранение и изменение данных
+
+View - слой представления, отвечает за отображение данных на странице
+
+Presenter - содержит основную логику приложения и отвечает за связь представления и данных
+
+Взаимодействие между классами обеспечивается использованием событийно-ориентированного подхода. Модели и Представления генерируют события при изменении данных или взаимодействии пользователя с приложением, а Презентер обрабатывает эти события используя методы как Моделей, так и Представлений.
 
 Технологический стек:
 TypeScript - строгая типизация
@@ -8,20 +17,32 @@ Webpack - сборка проекта
 HTML5 - семантическая разметка
 
 Структура проекта
-src/components/base/     Базовые компоненты       
+src/components/base/        Базовые компоненты       
            
--  api.ts           API-клиент
-- events.ts         Система событий
-- App.ts            Главный компонент приложения
+- api.ts            Класс для работы с API
+- events.ts         Брокер событий
+- component.ts      Базовый компонент
+
+src/components/models/     Модели данных
+
 - ProductModel.ts   Модель товаров
-- OrderModel.ts     Модель заказов
-- Page.ts           Компонент страницы
-- ProductCard.ts    Карточка товара
-- Modal.ts          Модальное окно
-- Basket.ts         Корзина
-- OrderForm.ts      Форма заказа
+- BasketModel.ts    Модель корзины
+- OrderModel.ts     Модель заказа
+- ShopApi.ts        API магазина
+
+src/components/view/      Компоненты представления
+
+- BaseCard.ts       Базовая карточка
+- CardCatalog.ts    Карточка товара в каталоге
+- CardPreview.ts    Детальное представление товара
+- CartItem.ts       Элемент корзины
+- CartView.ts       Представление корзины
+- Header.ts         Шапка приложения
+- Gallery.ts        Галерея товаров
+- ModalContainer.ts Контейнер модальных окон
+- OrderAddressForm.ts Форма адреса и оплаты
 - ContactsForm.ts   Форма контактов
-- SuccessMessage.ts Сообщение об успехе
+- SuccessMessage.ts   Успешное оформление заказа
 
 types/              Типы TypeScript
 - appState.ts       Состояние приложения
@@ -36,7 +57,7 @@ utils/              Утилиты
 scss/               Стили
 - styles.scss       Основные стили
 
-index.ts            Точка входа
+index.ts            Точка входа приложения
 
 
 # Основные функции
@@ -54,250 +75,196 @@ index.ts            Точка входа
 
 - Подтверждение успешного оформления заказа
 
-# Данные и типы данных
-Базовые типы API
+# Базовый код
+
+Класс Component
+Базовый класс для всех компонентов интерфейса.
 ```typescript
-// Ответ API для списка товаров
-export type ApiListResponse<Type> = {
-    total: number,
-    items: Type[]
-};
+// Конструктор:
+constructor(container: HTMLElement)
 
-
-// Методы для POST запросов
+// Методы
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 ```
 Модель товара
 ```typescript
-export interface IProduct {
-    id: string;
-    title: string;
-    price: number | null;  // Цена или null если товар недоступен
-    description?: string;  // Описание товара
-    image?: string;        // URL изображения
-    category?: string;     // Категория: 'софт-скил', 'другое', 'хард-скил' и др.
-}
+render(data?: Partial<T>): HTMLElement - главный метод для отображения данных
+
+setImage(element: HTMLImageElement, src: string, alt?: string): void - утилитарный метод для работы с изображениями
 ```
-Модель заказа
+
+Класс Api
+Содержит базовую логику отправки запросов.
+
 ```typescript
-export interface IOrderForm {
-    payment: 'online' | 'offline';  // Способ оплаты
-    email: string;                  // Email покупателя
-    phone: string;                  // Телефон покупателя
-    address: string;                // Адрес доставки
-}
+// Конструктор:
+constructor(baseUrl: string, options: RequestInit = {})
 
-export interface IOrder extends IOrderForm {
-    items: string[];  // Массив ID товаров в заказе
-    total: number;    // Общая сумма заказа
-}
+// Методы
+get<T extends object>(uri: string): Promise<T> - GET запрос
+
+post<T extends object>(uri: string, data: object, method?: ApiPostMethods): Promise<T> - POST/PUT/DELETE запрос
 ```
-Состояние приложения
+
+Класс EventEmitter
+Брокер событий реализует паттерн "Наблюдатель".
+
 ```typescript
-export interface AppState {
-    catalog: IProduct[];  // Каталог всех товаров
-    basket: string[];     // ID товаров в корзине
-    order: IOrder | null; // Информация о текущем заказе
-}
+// Методы
+on<T extends object>(event: EventName, callback: (data: T) => void): void - подписка на событие
+
+emit<T extends object>(event: string, data?: T): void - инициализация события
+
+off(eventName: EventName, callback: Subscriber): void - отписка от события
 ```
-События приложения
+Интерфейс IProduct
 ```typescript
-export enum Events {
-    ITEM_ADDED = 'item:added',        // Товар добавлен в корзину
-    ORDER_OPENED = 'order:opened',    // Начато оформление заказа
-    ORDER_SUBMITTED = 'order:submitted', // Заказ отправлен на сервер
-    MODAL_CLOSE = 'modal:close'       // Модальное окно закрыто
+interface IProduct {
+  id: string;
+  title: string;
+  price: number | null;
+  description?: string;
+  image?: string;
+  category?: string;
 }
 ```
-Компоненты интерфейса
+Интерфейс IOrderForm
+```typescript
+interface IOrderForm {
+  payment: "online" | "offline";
+  email: string;
+  phone: string;
+  address: string;
+}
+```
 
-ProductCard
-Компонент карточки товара, используется в каталоге и в превью.
-Особенности:
-- Отображение изображения, названия, цены и категории
-- Кнопка "В корзину"/"Убрать" в зависимости от состояния
-- Клик по карточке открывает детальное превью
+Класс ProductModel
+Управляет каталогом товаров.
+```typescript
+// Методы
+setProductList(products: IProduct[]): void - сохранение списка товаров
+getProductList(): IProduct[] - получение списка товаров
+getProductById(id: string): IProduct | undefined - получение товара по ID
+```
 
-Modal
-Универсальное модальное окно с затемнением фоном.
-Функциональность:
-- Закрытие по клику на крестик или вне области контента
-- Блокировка прокрутки основного контента при открытии
-- Поддержка различных типов контента
+Класс BasketModel
+Управляет корзиной покупок.
+```typescript
+// Методы
+addToBasket(product: IProduct): void - добавление товара в корзину
+removeFromBasket(id: string): void - удаление товара из корзины
+getBasketCount(): number - количество товаров в корзине
+getBasketTotal(): number - общая стоимость товаров
+```
 
-Basket
-Компонент корзины товаров.
-Отображает:
-- Список товаров в корзине
-- Общую сумму заказа
-- Кнопку перехода к оформлению
+Класс OrderModel
+Управляет данными заказа и валидацией.
+```typescript
+// Методы
+validatePayment(): IValidationResult - валидация способа оплаты
+validateAddress(): IValidationResult - валидация адреса
+validateContacts(): IValidationResult - валидация контактов
+getOrderData(): IOrderForm - получение данных заказа
+```
 
-OrderForm & ContactsForm
-Формы для оформления заказа с валидацией полей.
 
-# Модели данных (Model)
+# Слой коммуникации
 
-ProductModel - Модель товаров
-Назначение: Управление данными товаров и их состоянием в приложении
+Класс ShopApi
+Отвечает за взаимодействие с сервером.
+```typescript
+// Методы
+getProducts(): Promise<IProduct[]> - получение списка товаров
+createOrder(order: IOrderForm & { items: string[]; total: number }): Promise<IOrder> - создание заказа
+```
 
-Поля:
-- state: AppState - текущее состояние приложения
-- catalog: IProduct[] - каталог всех товаров
-- basket: string[] - ID товаров в корзине
+# Слой представления
+Базовые компоненты
+BaseCard
+Базовый класс для карточек товаров.
 
-Методы:
-- loadProducts(): Promise<IProduct[]> - загрузка товаров с сервера
-- getProductById(id: string): IProduct | undefined - поиск товара по ID
-- getBasketProducts(): IProduct[] - получение товаров в корзине
-- clearBasket(): void - очистка корзины
+CardCatalog
+Карточка товара в каталоге с изображением, категорией, названием и ценой.
 
-OrderModel - Модель заказов
-Назначение: Управление процессом оформления заказа и валидация данных
+CardPreview
+Детальное представление товара в модальном окне с кнопкой добавления/удаления из корзины.
 
-Методы:
-- createOrder(order: IOrder): Promise<IOrder> - создание заказа на сервере
-- validateOrder(order: Partial<IOrderForm>): string[] - валидация данных заказа
-- validateEmail(email: string): boolean - проверка формата email
-- validatePhone(phone: string): boolean - проверка формата телефона
+CartItem
+Элемент корзины с порядковым номером, названием, ценой и кнопкой удаления.
 
-# Представления (View)
+CartView
+Представление корзины со списком товаров, общей стоимостью и кнопкой оформления заказа.
 
-ProductCard - Карточка товара
-Назначение: Отображение товара в каталоге и модальном окне
+Формы заказа
+OrderAddressForm
+Форма для ввода адреса доставки и выбора способа оплаты.
 
-Поля:
-- _element: HTMLElement - DOM элемент карточки
-- _image: HTMLImageElement - изображение товара
-- _title: HTMLElement - название товара
-- _price: HTMLElement - цена товара
-- _category: HTMLElement - категория товара
-- _button: HTMLButtonElement - кнопка действия
-- _description: HTMLElement - описание товара (только в превью)
+OrderContactsForm
+Форма для ввода email и телефона покупателя.
 
-Методы:
-- render() - отрисовка карточки с данными товара
-- updateButton() - обновление состояния кнопки ("В корзину"/"Убрать")
-- setInBasket(value: boolean) - установка состояния корзины
-- addEvents() - добавление обработчиков событий
+OrderSuccess
+Сообщение об успешном оформлении заказа.
 
-Basket - Корзина покупок
-Назначение: Отображение и управление корзиной товаров
+Вспомогательные компоненты
+Header
+Шапка приложения со счетчиком товаров в корзине.
 
-Поля:
-- _element: HTMLElement - DOM элемент корзины
-- _list: HTMLElement - контейнер списка товаров
-- _total: HTMLElement - элемент общей суммы
-- _button: HTMLButtonElement - кнопка оформления заказа
+Gallery
+Контейнер для отображения каталога товаров.
 
-Методы:
-- updateItems(products: IProduct[], basketIds: string[]) - обновление списка товаров
-- updateTotal(products: IProduct[]) - расчет и отображение общей суммы
-- addEvents() - добавление обработчиков событий
+ModalContainer
+Универсальный контейнер для модальных окон.
 
-Modal - Модальное окно
-Назначение: Универсальный контейнер для всплывающих окон
+# Функциональные возможности
+Просмотр каталога товаров - отображение всех доступных товаров
 
-Поля:
-- _element: HTMLElement - DOM элемент модального окна
-- _closeButton: HTMLButtonElement - кнопка закрытия
-- _content: HTMLElement - контейнер содержимого
+Детальный просмотр товара - модальное окно с полной информацией о товаре
 
-Методы:
-- open() - открытие модального окна
-- close() - закрытие модального окна
-- setContent(content: HTMLElement) - установка содержимого
-- addEvents() - добавление обработчиков событий
+Управление корзиной - добавление/удаление товаров, отображение общей стоимости
 
-OrderForm - Форма заказа
-Назначение: Форма оформления заказа (шаг 1 - адрес и оплата)
+Оформление заказа - двухэтапная форма с валидацией данных
 
-Поля:
-- _element: HTMLElement - DOM элемент формы
-- _paymentButtons: HTMLButtonElement[] - кнопки выбора оплаты
-- _addressInput: HTMLInputElement - поле ввода адреса
-- _submitButton: HTMLButtonElement - кнопка отправки
-- _errors: HTMLElement - контейнер ошибок
+Различные способы оплаты - онлайн или при получении
 
-Методы:
-- selectPayment(method: 'online' | 'offline') - выбор способа оплаты
-- validate() - валидация формы
-- submit() - отправка формы
-- clear() - очистка формы
+Адаптивный интерфейс - удобное отображение на разных устройствах
 
-ContactsForm - Форма контактов
-Назначение: Форма ввода контактных данных (шаг 2 - email и телефон)
 
-Поля:
-- _element: HTMLElement - DOM элемент формы
-- _emailInput: HTMLInputElement - поле ввода email
-- _phoneInput: HTMLInputElement - поле ввода телефона
-- _submitButton: HTMLButtonElement - кнопка отправки
-- _errors: HTMLElement - контейнер ошибок
+# События приложения
+Приложение использует событийную модель для взаимодействия между компонентами:
 
-Методы:
-- validate() - валидация формы
-- submit() - отправка формы
-- clear() - очистка формы
+product:select - выбор товара для просмотра
 
-SuccessMessage - Сообщение об успехе
-Назначение: Отображение подтверждения успешного заказа
+basket:add - добавление товара в корзину
 
-Поля:
-- _element: HTMLElement - DOM элемент сообщения
-- _title: HTMLElement - заголовок
-- _description: HTMLElement - описание с суммой
-- _closeButton: HTMLButtonElement - кнопка закрытия
+basket:remove - удаление товара из корзины
 
-Методы:
-- setData(total: number) - установка данных о заказе
-- addEvents() - добавление обработчиков событий
+basket:open - открытие корзины
 
-# Система событий
+order:open - открытие формы заказа
 
-EventEmitter - Брокер событий
-Назначение: Централизованная система управления событиями
+order:address:change - изменение адреса доставки
 
-Методы:
-- on<T>(event: EventName, callback: (data: T) => void) - подписка на событие
-- emit<T>(event: string, data?: T) - генерация события
-- off(event: EventName, callback: Subscriber) - отписка от события
-- onAll(callback: (event: EmitterEvent) => void) - подписка на все события
+order:payment:change - изменение способа оплаты
 
-# Основные сценарии использования
-1. Просмотр каталога товаров
-- ProductModel загружает товары с сервера
-- ProductCard отображает каждый товар в каталоге
-- Пользователь может кликнуть на товар для просмотра деталей
+order:contacts:submit - отправка данных контактов
 
-2. Работа с корзиной
-- При клике "В корзину" ProductCard генерирует событие ITEM_ADDED
-- Basket обновляет список товаров и общую сумму
-- ProductModel обновляет состояние корзины
+modal:close - закрытие модального окна
 
-3. Оформление заказа
-- Basket открывает форму заказа при клике "Оформить"
-- OrderForm валидирует данные адреса и оплаты
-- ContactsForm валидирует контактные данные
-- OrderModel отправляет заказ на сервер
 
-4. Подтверждение заказа
-- SuccessMessage отображает итоговую сумму
-- ProductModel очищает корзину после успешного заказа
+# Особенности реализации
+Четкое разделение ответственности между слоями MVP
 
-# Вспомогательные утилиты
+Использование TypeScript для типобезопасности
 
-Работа с DOM
-- ensureElement() - гарантированное получение элемента
-- ensureAllElements() - получение всех элементов
-- cloneTemplate() - клонирование HTML шаблонов
+Событийно-ориентированная архитектура
 
-Валидация и проверки
-- isSelector() - проверка является ли строка селектором
-- isEmpty() - проверка на пустое значение
-- isPlainObject() - проверка на простой объект
+Модульная структура компонентов
 
-BEM нейминг
-bem() - генератор BEM классов
+Валидация форм на стороне клиента
+
+Обработка ошибок при работе с API
+
+Адаптивный дизайн
 
 # Запуск и разработка
 Установка зависимостей
@@ -312,22 +279,3 @@ npm run start
 ```bash
 npm run build
 ```
-# Особенности реализации
-Событийная архитектура - компоненты общаются через систему событий
-
-Разделение ответственности - четкое разделение на модели, компоненты и утилиты
-
-TypeScript - полная типизация для надежности кода
-
-Адаптивный дизайн - поддержка различных устройств
-
-Валидация форм - проверка корректности вводимых данных
-
-# Скрипты package.json
-start - запуск dev-сервера с hot reload
-
-build - сборка проекта для production
-
-serve - запуск статического сервера для собранного проекта
-
-Проект демонстрирует современный подход к разработке SPA-приложений с использованием TypeScript и компонентной архитектуры.
