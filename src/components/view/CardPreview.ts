@@ -16,6 +16,9 @@ export class CardPreview extends BaseCard<ICardPreview> {
   protected descEl: HTMLElement;
   protected buttonEl: HTMLButtonElement;
 
+  private inCart = false;
+  private productId = '';
+
   constructor(events: IEvents, container: HTMLElement) {
     super(events, container);
     this.imageEl = this.container.querySelector('.card__image') as HTMLImageElement;
@@ -24,32 +27,37 @@ export class CardPreview extends BaseCard<ICardPreview> {
     this.descEl = this.container.querySelector('.card__text') as HTMLElement;
     this.buttonEl = this.container.querySelector('.card__button') as HTMLButtonElement;
 
-    if (this.buttonEl) {
-      this.buttonEl.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (this.buttonEl.disabled) return;
-        
-        const id = this.container.dataset.id;
-        if (id) {
-          this.events.emit(this.buttonEl.textContent === 'Удалить из корзины' ? 'basket:remove' : 'basket:add', { id });
-        }
-      });
-    }
+    this.buttonEl.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (this.buttonEl.disabled || !this.productId) return;
+      
+      this.events.emit(this.inCart ? 'basket:remove' : 'basket:add', { id: this.productId });
+      this.inCart = !this.inCart;
+      this.updateButtonView();
+    });
   }
 
-  updateCartState(inCart: boolean) {
-    if (this.buttonEl) {
-      this.buttonEl.textContent = inCart ? 'Удалить из корзины' : 'Купить';
-      this.buttonEl.disabled = this.priceEl.textContent === 'Бесценно';
+  public updateCartState(inCart: boolean) {
+    this.inCart = inCart;
+    this.updateButtonView();
+  }
+
+  private updateButtonView() {
+    if (this.buttonEl.disabled) {
+      this.buttonEl.textContent = 'Недоступно';
+    } else {
+      this.buttonEl.textContent = this.inCart ? 'Удалить из корзины' : 'Купить';
     }
   }
 
   set data(p: ICardPreview) {
     super.data = p;
+    this.productId = p.id;
     this.image = p.image;
     this.category = p.category;
     this.description = p.description;
     this.price = p.price;
+    this.updateButtonView();
   }
 
   set image(src: string) {
@@ -70,10 +78,11 @@ export class CardPreview extends BaseCard<ICardPreview> {
   set price(value: number | null) {
     if (value === null) {
       this.priceEl.textContent = 'Бесценно';
-      if (this.buttonEl) this.buttonEl.disabled = true;
+      this.buttonEl.disabled = true;
     } else {
       this.priceEl.textContent = `${value} синапсов`;
-      if (this.buttonEl) this.buttonEl.disabled = false;
+      this.buttonEl.disabled = false;
     }
+    this.updateButtonView();
   }
 }

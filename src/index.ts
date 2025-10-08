@@ -21,7 +21,7 @@ import { CardCatalog } from "./components/view/CardCatalog";
 import { CardPreview } from "./components/view/CardPreview";
 import { CartItem } from "./components/view/CartItem";
 import { CartView } from "./components/view/CartView";
-import { OrderSuccess } from "./components/view/SuccessMessage.ts";
+import { OrderSuccess } from "./components/view/SuccessMessage";
 import { OrderAddressForm } from "./components/view/OrderAddressForm";
 import { OrderContactsForm } from "./components/view/ContactsForm";
 
